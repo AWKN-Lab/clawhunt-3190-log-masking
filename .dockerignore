@@ -1,0 +1,12 @@
+.git
+.gitignore
+.gitattributes
+.github
+.local-raw
+docs/raw
+__pycache__
+.pytest_cache
+artifacts
+tests
+bench
+MANIFEST.sha256

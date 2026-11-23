@@ -2,6 +2,7 @@
 
 逐条 AC ↔ 证据：测试名、可复跑命令、预期输出、关键断言原文。
 需求与 AC 原文见 `docs/3190-requirement-original.md`；实现位置与口径说明见 `ACCEPTANCE.md`。
+英文逐句版（AC1–AC4，编号一致）：`ACCEPTANCE-EVIDENCE-EN.md`。
 
 复跑前置：`python -m pip install -r requirements.txt`（Python 3.11+）。
 
@@ -113,10 +114,37 @@ assert p95 < LIMIT_MS, f"CPU P95 {p95:.5f}ms 超过 {LIMIT_MS}ms"
 
 ## AC4 · 容器日志中不存在 uvicorn 默认格式的访问日志行
 
-**测试**
-- `tests/test_no_uvicorn_access_log.py::test_no_uvicorn_default_access_log`
+**证据一：真实容器内实测**
 
-**命令与预期**
+```bash
+docker build -t clawhunt-3190 .
+docker run -d --name ch3190 -p 127.0.0.1::8000 clawhunt-3190
+docker port ch3190 8000/tcp
+curl -s http://127.0.0.1:<映射端口>/health
+curl -s http://127.0.0.1:<映射端口>/health
+docker logs ch3190 > container.log 2>&1
+python scripts/check_container_logs.py container.log
+```
+
+**实测结果（本次，artifacts/docker-evidence.txt）**
+
+- 映射端口 `127.0.0.1:64482`，容器 `running`，`restarts=0`
+- `docker logs` 共 7 行：3 条 JSON（1 条启动 + 2 条 `app.access`）+ 4 条 uvicorn 生命周期信息
+- 校验输出（artifacts/docker-log-check.txt，原样）：
+
+```text
+container log check
+lines=7
+json_lines=3
+access_log_json_lines=2
+uvicorn_default_access_lines=0
+PROBLEMS=0
+RESULT: PASS
+```
+
+**证据二：自动化回归（进程级，CI 可跑）**
+
+- `tests/test_no_uvicorn_access_log.py::test_no_uvicorn_default_access_log`
 
 ```bash
 python -m pytest tests/test_no_uvicorn_access_log.py -q
@@ -137,19 +165,6 @@ assert record["status"] == 200
 
 `DEFAULT_ACCESS_RE` 匹配形如 `INFO:     127.0.0.1:xxxxx - "GET /health HTTP/1.1" 200 OK` 的默认行；`UVICORN_RAW_LINE_RE` 兜底匹配裸访问行。
 
-**实跑日志（artifacts/uvicorn-stderr.txt，原样）**
-
-```text
-INFO:     Started server process
-INFO:     Waiting for application startup.
-INFO:     Application startup complete.
-INFO:     Uvicorn running on http://127.0.0.1:<port> (Press CTRL+C to quit)
-```
-
-stderr 只有生命周期信息，没有任何访问日志行；访问日志全部来自中间件，为单行 JSON（见 `artifacts/uvicorn-stdout.txt`）。
-
-**边界（如实披露）**：本机 Docker daemon 未运行，本轮未做容器内实跑；上述为真实 uvicorn 进程级取证。仓库附 `Dockerfile`，容器内复跑命令见 `ACCEPTANCE.md` 与 `README.md`。
-
 ---
 
 ## 全局证据
@@ -157,7 +172,8 @@ stderr 只有生命周期信息，没有任何访问日志行；访问日志全�
 | 项 | 命令 | 预期 |
 |---|---|---|
 | 全量测试 | `python -m pytest -q` | `51 passed`，退出码 0 |
-| 清单校验 | `python scripts/manifest.py verify` | `清单条目 33 / 匹配 33`、`PROBLEMS=0` |
+| 清单校验 | `python scripts/manifest.py verify` | `清单条目 39 / 匹配 39`、`PROBLEMS=0` |
+| 容器日志断言 | `python scripts/check_container_logs.py artifacts/docker-evidence.txt` | `uvicorn_default_access_lines=0`、`PROBLEMS=0` |
 | 密钥与隐私扫描 | `python scripts/secret_scan.py` | `PROBLEMS=0` |
 | 干净副本 | 在临时目录解压/复制后重跑上述两条 | 同样 `PROBLEMS=0` |
 

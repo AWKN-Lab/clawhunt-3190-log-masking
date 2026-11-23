@@ -42,6 +42,7 @@ python -m pytest -q                      # 51 用例，含真实 uvicorn 子进�
 python -m pytest tests/test_masking.py -q
 python -m pytest tests/test_no_uvicorn_access_log.py -q
 python bench/bench_masking.py            # AC3 基准输出
+python scripts/check_container_logs.py artifacts/docker-evidence.txt   # AC4 容器日志断言
 ```
 
 预期结果见 [TEST-REPORT.md](TEST-REPORT.md) 与 [ACCEPTANCE.md](ACCEPTANCE.md)。
@@ -139,7 +140,7 @@ curl -s http://127.0.0.1:<映射端口>/health
 docker logs ch3190            # 断言：无 uvicorn 默认访问日志行，只有 JSON
 ```
 
-> 若需固定主机端口，先登记端口再绑定。本次交付未在本机实跑容器（Docker daemon 未运行），进程级取证见 ACCEPTANCE.md。
+> 已在本机容器内实测（Docker Desktop 29.9.2）：映射端口 127.0.0.1:64482，`docker logs` 中 uvicorn 默认访问日志 0 条，原始输出见 `artifacts/docker-evidence.txt`、`artifacts/docker-log-check.txt`。镜像未推送到任何 registry。
 
 ## 10. 目录
 
@@ -152,9 +153,14 @@ app/main.py              可运行装配与示例路由（只用于验证日志�
 tests/                   单元测试 + 集成测试（真实 uvicorn 子进程）
 bench/bench_masking.py   脱敏耗时基准（AC3）
 scripts/fetch_requirement.py  工单原文抓取（复跑用，凭据只读环境变量）
+scripts/make_public_problem.py 接口响应脱敏为可公开元数据
+scripts/secret_scan.py        密钥与隐私扫描（发布前门禁）
+scripts/check_container_logs.py 容器日志断言（无 uvicorn 默认访问行）
+artifacts/               测试、基准、容器取证原始输出
 docs/                    工单原文与脱敏后的接口元数据
 ACCEPTANCE.md            AC 对照表
 ACCEPTANCE-EVIDENCE.md   逐条 AC 与证据（测试名、命令、预期输出、断言原文）
+ACCEPTANCE-EVIDENCE-EN.md 英文逐句 AC 与证据（编号与中文版一致）
 TEST-REPORT.md           测试与基准实测输出
 MANIFEST.sha256          SHA256 清单
 ```

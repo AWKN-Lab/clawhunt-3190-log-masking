@@ -12,22 +12,30 @@
 | AC1 | pytest 用虚构的手机号、身份证号、邮箱、JWT、口令样本断言输出全部被脱敏 | [masking.py](app/core/masking.py#L130-L192) 值规则与递归；[logging.py](app/core/logging.py#L70-L90) `MaskingFilter` 在序列化前改写 LogRecord | `python -m pytest tests/test_masking.py tests/test_logging.py -q`<br>预期：`41 passed`，包含 `test_ac1_all_sample_types_masked_in_one_payload`、`test_msg_and_args_masked_before_serialization` | 达成 |
 | AC2 | 嵌套 dict 与 list 中的敏感键同样被替换为 `[REDACTED]`（测试断言） | [masking.py](app/core/masking.py#L175-L192) `mask_payload` 递归；[masking.py](app/core/masking.py#L92-L100) 键名判定 | `python -m pytest tests/test_masking.py::test_ac2_nested_dict_and_list_redacted -q`<br>预期：`1 passed`；再跑 `tests/test_middleware.py::test_whitelisted_body_logged_and_masked` 验证日志路径 | 达成 |
 | AC3 | 基准测试显示单条日志脱敏耗时 < 0.2 毫秒（附输出） | [logging.py](app/core/logging.py#L159-L163) `mask_record`；基准脚本 [bench_masking.py](bench/bench_masking.py) | `python bench/bench_masking.py`<br>预期：`cpu mean≈0.027ms / p95≈0.047ms`，`result : PASS`；`python -m pytest tests/test_benchmark.py -q` 预期 `1 passed` | 达成 |
-| AC4 | 容器日志中不存在 uvicorn 默认格式的访问日志行 | [logging.py](app/core/logging.py#L121-L152) 关闭 `uvicorn.access`；[middleware.py](app/core/middleware.py#L47-L124) 统一输出 JSON 访问日志 | `python -m pytest tests/test_no_uvicorn_access_log.py -q`<br>该用例真实拉起 `uvicorn app.main:app`（**故意不加** `--no-access-log`），抓 stdout。<br>预期：`1 passed`，断言 `offenders==[]` 且至少 2 条 `"logger":"app.access"` 的 JSON 行 | 达成（进程级实跑取证）；容器内实跑未做，原因见下 |
+| AC4 | 容器日志中不存在 uvicorn 默认格式的访问日志行 | [logging.py](app/core/logging.py#L121-L152) 关闭 `uvicorn.access`；[middleware.py](app/core/middleware.py#L47-L124) 统一输出 JSON 访问日志 | **容器内实测**：`docker build` → `docker run` → 请求 `/health` 两次 → `docker logs`（`artifacts/docker-evidence.txt`）。断言命令 `python scripts/check_container_logs.py artifacts/docker-evidence.txt`，预期 `uvicorn_default_access_lines=0`、`access_log_json_lines=2`、`PROBLEMS=0`。另有进程级回归 `python -m pytest tests/test_no_uvicorn_access_log.py -q`，预期 `1 passed` | 达成（容器内实测） |
 
-### AC4 的诚实边界
+### AC4 容器实测记录
 
-本机 Docker daemon 未运行（`docker version` 报 `cannot find npipe dockerDesktopLinuxEngine`），本轮未启动 Docker Desktop，也没有拉任何镜像。
-因此 AC4 的取证方式是：**真实 uvicorn 进程** + 捕获 stdout，证明默认访问日志被代码关闭、只剩中间件 JSON 行。容器只是把同一个 stdout 交给日志驱动，日志内容一致。
-已附 [Dockerfile](Dockerfile) 供有 Docker 的环境复跑：
+- 环境：Docker Desktop 29.9.2（Windows + WSL2），基础镜像 `python:3.11-slim`，镜像内不加 `--no-access-log`。
+- 执行：`docker build` → `docker run -d --name ch3190-review -p 127.0.0.1::8000` → 请求 `/health` 两次 → `docker logs` → `docker rm -f`。
+- 实测映射端口 `127.0.0.1:64482`；容器 `running`，`restarts=0`。
+- `docker logs` 共 7 行：3 条 JSON（1 条启动 + 2 条 `app.access`）+ 4 条 uvicorn 生命周期信息；**uvicorn 默认访问日志 0 条**。
+- 断言结果：`uvicorn_default_access_lines=0`、`PROBLEMS=0`、`RESULT: PASS`（`artifacts/docker-log-check.txt`）。
+
+复跑命令（任意有 Docker 的环境）：
 
 ```bash
 docker build -t clawhunt-3190 .
-docker run --rm -d --name ch3190 -p 127.0.0.1::8000 clawhunt-3190
+docker run -d --name ch3190 -p 127.0.0.1::8000 clawhunt-3190
+docker port ch3190 8000/tcp          # 取映射到主机的端口
 curl -s http://127.0.0.1:<映射端口>/health
-docker logs ch3190
+curl -s http://127.0.0.1:<映射端口>/health
+docker logs ch3190 > container.log 2>&1
+python scripts/check_container_logs.py container.log
+docker rm -f ch3190
 ```
 
-预期 `docker logs` 中没有任何 `INFO:     127.0.0.1:xxxxx - "GET /health HTTP/1.1" 200 OK` 行。
+预期 `uvicorn_default_access_lines=0`，且 `access_log_json_lines>=2`。
 
 ## 二、本单范围条目核对（非 AC，但属交付要求）
 
@@ -51,6 +59,7 @@ docker logs ch3190
 
 ## 四、未执行项
 
-- 未投标、未调平台提交接口、未 push、未碰 GitHub（硬约束）。
-- 未安装任何付费组件；测试只依赖本机已有的 fastapi/uvicorn/pytest/httpx。
-- Docker 容器实跑未做（daemon 未运行），替代取证见 AC4 说明。
+- 未投标、未调用平台提交接口。
+- 未安装任何付费组件；测试只依赖 fastapi/uvicorn/pytest/httpx。
+- 容器做了本地构建与运行取证，但镜像未推送到任何 registry。
+- 仓库已推送到 GitHub 公开仓，未使用 force push。

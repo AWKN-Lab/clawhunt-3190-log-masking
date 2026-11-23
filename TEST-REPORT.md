@@ -54,7 +54,29 @@ result         : PASS (cpu mean < 0.2 ms and cpu p95 < 0.2 ms)
 
 原始输出：`artifacts/bench.txt`
 
-## 4. AC4：无 uvicorn 默认访问日志（真实进程取证）
+## 4. AC4：无 uvicorn 默认访问日志
+
+### 4.1 容器内实测（主证据）
+
+- 环境：Docker Desktop 29.9.2（Windows + WSL2），基础镜像 `python:3.11-slim`，**不加** `--no-access-log`。
+- 执行：`docker build` → `docker run -d --name ch3190-review -p 127.0.0.1::8000` → 请求 `/health` 两次 → `docker logs` → `docker rm -f`。
+- 实测映射端口 `127.0.0.1:64482`；容器状态 `running`，`restarts=0`。
+- `docker logs` 共 7 行：3 条 JSON（1 条启动 + 2 条 `app.access`）+ 4 条 uvicorn 生命周期信息，**默认访问日志 0 条**。
+- 断言（`python scripts/check_container_logs.py artifacts/docker-evidence.txt`）：
+
+```text
+container log check
+lines=7
+json_lines=3
+access_log_json_lines=2
+uvicorn_default_access_lines=0
+PROBLEMS=0
+RESULT: PASS
+```
+
+原始取证：`artifacts/docker-evidence.txt`（构建、运行、端口映射、docker logs、容器状态）、`artifacts/docker-build.txt`、`artifacts/docker-log-check.txt`。
+
+### 4.2 进程级自动化回归（CI 可跑）
 
 `tests/test_no_uvicorn_access_log.py` 的取证逻辑：绑定回环端口 0 取空闲端口 → 以 `python -m uvicorn app.main:app` 启动（**不加** `--no-access-log`）→ 请求 `/health` 两次 → 终止进程 → 抓 stdout/stderr。
 
@@ -63,18 +85,7 @@ result         : PASS (cpu mean < 0.2 ms and cpu p95 < 0.2 ms)
 2. 不存在任何 `"GET ... HTTP/1.1" 200` 裸访问行；
 3. 至少 2 条 `"logger":"app.access"` 的 JSON 访问记录，字段完整。
 
-人工复跑同样场景的原始日志（stdout / stderr 分开保存）：
-
-`artifacts/uvicorn-stdout.txt`
-
-```json
-{"ts":"2026-11-23T11:52:11.825Z","level":"INFO","logger":"app","msg":"application started",...,"env":"dev"}
-{"ts":"2026-11-23T11:52:12.101Z","level":"INFO","logger":"app.access","msg":"GET /health","request_id":"75e217bf-...","route":"/health","status":200,"duration_ms":3.886,"env":"dev"}
-{"ts":"2026-11-23T11:52:12.351Z","level":"INFO","logger":"app.access","msg":"GET /health","request_id":"ba46857c-...","route":"/health","status":200,"duration_ms":1.041,"env":"dev"}
-{"ts":"2026-11-23T11:52:12.365Z","level":"INFO","logger":"app.access","msg":"GET /api/users/{user_id}","request_id":"3bdb0263-...","route":"/api/users/{user_id}","status":200,"duration_ms":1.707,"env":"dev"}
-```
-
-`artifacts/uvicorn-stderr.txt`
+人工复跑同样场景的原始日志（stdout / stderr 分开保存）：`artifacts/uvicorn-stdout.txt`、`artifacts/uvicorn-stderr.txt`。
 
 ```text
 INFO:     Started server process [16568]
@@ -83,20 +94,20 @@ INFO:     Application startup complete.
 INFO:     Uvicorn running on http://127.0.0.1:57010 (Press CTRL+C to quit)
 ```
 
-结论：stderr 只有 uvicorn 生命周期信息，**没有任何访问日志行**；访问日志全部来自本中间件，为单行 JSON。
+结论：进程 stderr 只有 uvicorn 生命周期信息，**没有任何访问日志行**；访问日志全部来自本中间件，为单行 JSON。容器日志结论与之一致。
 
 ## 5. SHA256 清单与干净目录复校验
 
 ```text
-python scripts/manifest.py build    -> MANIFEST.sha256 已生成：33 个文件
-python scripts/manifest.py verify   -> 清单条目 33，匹配 33，PROBLEMS=0，RESULT: PASS（退出码 0）
+python scripts/manifest.py build    -> MANIFEST.sha256 已生成：39 个文件
+python scripts/manifest.py verify   -> 清单条目 39，匹配 39，PROBLEMS=0，RESULT: PASS（退出码 0）
 ```
 
 干净目录复校验（复制到临时干净目录，排除缓存目录）：
 
 | 步骤 | 退出码 | 结果 |
 |---|---|---|
-| `python scripts/manifest.py verify` | 0 | 33/33 匹配，PROBLEMS=0，RESULT: PASS |
+| `python scripts/manifest.py verify` | 0 | 39/39 匹配，PROBLEMS=0，RESULT: PASS |
 | `python -m pytest -q` | 0 | 51 passed, 1 warning |
 
 说明：robocopy 退出码 1 表示「已复制文件」，属正常；清单校验与测试均退出码 0。
@@ -104,5 +115,5 @@ python scripts/manifest.py verify   -> 清单条目 33，匹配 33，PROBLEMS=0�
 
 ## 6. 未执行项
 
-- 容器内实跑：本机 Docker daemon 未运行（`docker version` 连接 `dockerDesktopLinuxEngine` 失败），未启动 Docker Desktop、未拉镜像。已提供 `Dockerfile` 与 README 复跑命令。
-- 未投标、未调平台提交接口、未 push、未碰 GitHub。
+- 镜像仅本地构建与运行，未推送到任何 registry。
+- 未投标、未调用平台提交接口。

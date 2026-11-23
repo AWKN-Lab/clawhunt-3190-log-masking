@@ -1,0 +1,7 @@
+container log check
+lines=7
+json_lines=3
+access_log_json_lines=2
+uvicorn_default_access_lines=0
+PROBLEMS=0
+RESULT: PASS

@@ -1,0 +1,119 @@
+=== docker version ===
+client=29.9.2 server=
+failed to connect to the docker API at npipe:////./pipe/dockerDesktopLinuxEngine; check if the path is correct and if the daemon is running: open //./pipe/dockerDesktopLinuxEngine: The system cannot find the file specified.
+engine_ready=True
+=== build ===
+#0 building with "desktop-linux" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile:
+#1 transferring dockerfile: 503B 0.2s done
+#1 DONE 0.4s
+
+#2 [internal] load metadata for docker.io/library/python:3.11-slim
+#2 DONE 3.0s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 163B 0.0s done
+#3 DONE 0.1s
+
+#4 [1/5] FROM docker.io/library/python:3.11-slim@sha256:07d4824036af339fa1b6ef769cc99d9c10a141769538b52b3b597c84f7a7b535
+#4 CACHED
+
+#5 [internal] load build context
+#5 transferring context: 63.31kB 0.1s done
+#5 DONE 0.1s
+
+#6 [2/5] WORKDIR /app
+#6 DONE 0.1s
+
+#7 [3/5] COPY requirements.txt ./
+#7 DONE 0.1s
+
+#8 [4/5] RUN pip install --no-cache-dir "fastapi>=0.110" "uvicorn>=0.27"
+#8 9.301 Collecting fastapi>=0.110
+#8 10.16   Downloading fastapi-0.165.0-py3-none-any.whl.metadata (27 kB)
+#8 10.54 Collecting uvicorn>=0.27
+#8 10.82   Downloading uvicorn-0.54.0-py3-none-any.whl.metadata (6.6 kB)
+#8 11.51 Collecting starlette>=1.6.0 (from fastapi>=0.110)
+#8 11.78   Downloading starlette-1.10.0-py3-none-any.whl.metadata (6.6 kB)
+#8 12.38 Collecting anyio>=4.1.0 (from fastapi>=0.110)
+#8 12.64   Downloading anyio-4.16.0-py3-none-any.whl.metadata (4.7 kB)
+#8 13.79 Collecting pydantic>=2.9.0 (from fastapi>=0.110)
+#8 14.08   Downloading pydantic-2.14.4-py3-none-any.whl.metadata (143 kB)
+#8 14.34      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 144.0/144.0 kB 12.1 MB/s eta 0:00:00
+#8 14.66 Collecting typing-extensions>=4.8.0 (from fastapi>=0.110)
+#8 15.19   Downloading typing_extensions-4.16.0-py3-none-any.whl.metadata (3.3 kB)
+#8 15.47 Collecting typing-inspection>=0.4.2 (from fastapi>=0.110)
+#8 15.72   Downloading typing_inspection-0.4.5-py3-none-any.whl.metadata (2.6 kB)
+#8 16.33 Collecting annotated-doc>=0.0.2 (from fastapi>=0.110)
+#8 16.58   Downloading annotated_doc-0.0.7-py3-none-any.whl.metadata (6.4 kB)
+#8 17.02 Collecting opentelemetry-api>=1.44.0 (from fastapi>=0.110)
+#8 17.29   Downloading opentelemetry_api-1.45.2-py3-none-any.whl.metadata (1.4 kB)
+#8 17.63 Collecting click>=7.0 (from uvicorn>=0.27)
+#8 17.91   Downloading click-8.5.1-py3-none-any.whl.metadata (2.6 kB)
+#8 18.44 Collecting h11>=0.8 (from uvicorn>=0.27)
+#8 18.69   Downloading h11-0.16.0-py3-none-any.whl.metadata (8.3 kB)
+#8 19.04 Collecting idna>=2.8 (from anyio>=4.1.0->fastapi>=0.110)
+#8 19.30   Downloading idna-3.20-py3-none-any.whl.metadata (7.2 kB)
+#8 19.64 Collecting annotated-types>=0.6.0 (from pydantic>=2.9.0->fastapi>=0.110)
+#8 19.91   Downloading annotated_types-0.8.0-py3-none-any.whl.metadata (15 kB)
+#8 22.72 Collecting pydantic-core==2.50.5 (from pydantic>=2.9.0->fastapi>=0.110)
+#8 22.99   Downloading pydantic_core-2.50.5-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (6.6 kB)
+#8 23.34 Downloading fastapi-0.165.0-py3-none-any.whl (159 kB)
+#8 23.37    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 159.5/159.5 kB 7.9 MB/s eta 0:00:00
+#8 23.62 Downloading uvicorn-0.54.0-py3-none-any.whl (87 kB)
+#8 23.63    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 87.4/87.4 kB 12.9 MB/s eta 0:00:00
+#8 23.88 Downloading annotated_doc-0.0.7-py3-none-any.whl (5.3 kB)
+#8 24.15 Downloading anyio-4.16.0-py3-none-any.whl (134 kB)
+#8 24.43    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 134.5/134.5 kB 453.6 kB/s eta 0:00:00
+#8 24.68 Downloading click-8.5.1-py3-none-any.whl (126 kB)
+#8 24.70    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 126.2/126.2 kB 8.4 MB/s eta 0:00:00
+#8 25.36 Downloading h11-0.16.0-py3-none-any.whl (37 kB)
+#8 25.62 Downloading opentelemetry_api-1.45.2-py3-none-any.whl (60 kB)
+#8 25.63    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 60.3/60.3 kB 11.3 MB/s eta 0:00:00
+#8 25.88 Downloading pydantic-2.14.4-py3-none-any.whl (494 kB)
+#8 25.92    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 494.9/494.9 kB 15.4 MB/s eta 0:00:00
+#8 26.19 Downloading pydantic_core-2.50.5-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (2.3 MB)
+#8 26.64    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.3/2.3 MB 5.1 MB/s eta 0:00:00
+#8 26.89 Downloading starlette-1.10.0-py3-none-any.whl (80 kB)
+#8 26.90    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 80.6/80.6 kB 8.8 MB/s eta 0:00:00
+#8 27.67 Downloading typing_extensions-4.16.0-py3-none-any.whl (45 kB)
+#8 27.68    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 45.6/45.6 kB 7.9 MB/s eta 0:00:00
+#8 27.94 Downloading typing_inspection-0.4.5-py3-none-any.whl (14 kB)
+#8 28.21 Downloading annotated_types-0.8.0-py3-none-any.whl (13 kB)
+#8 28.48 Downloading idna-3.20-py3-none-any.whl (69 kB)
+#8 28.76    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 69.6/69.6 kB 217.5 kB/s eta 0:00:00
+#8 29.06 Installing collected packages: typing-extensions, idna, h11, click, annotated-types, annotated-doc, uvicorn, typing-inspection, pydantic-core, opentelemetry-api, anyio, starlette, pydantic, fastapi
+#8 31.63 Successfully installed annotated-doc-0.0.7 annotated-types-0.8.0 anyio-4.16.0 click-8.5.1 fastapi-0.165.0 h11-0.16.0 idna-3.20 opentelemetry-api-1.45.2 pydantic-2.14.4 pydantic-core-2.50.5 starlette-1.10.0 typing-extensions-4.16.0 typing-inspection-0.4.5 uvicorn-0.54.0
+#8 31.63 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv
+#8 32.29 
+#8 32.29 [notice] A new release of pip is available: 24.0 -> 26.3
+#8 32.29 [notice] To update, run: pip install --upgrade pip
+#8 DONE 33.2s
+
+#9 [5/5] COPY app ./app
+#9 DONE 0.1s
+
+#10 exporting to image
+#10 exporting layers
+#10 exporting layers 0.8s done
+#10 writing image sha256:cf87568e5585ecfa4f8ad58d55f8e5541809808f117521fa40d3fcad10e15751 done
+#10 naming to docker.io/library/clawhunt-3190:review 0.0s done
+#10 DONE 0.9s
+
+View build details: docker-desktop://dashboard/build/desktop-linux/desktop-linux/j1xgrj39yoi10z1zofozbaa9j
+=== run ===
+099c3458f155d2285f356e26804b8f804b1b61cd3a4a1df73a83602e17cfa12c
+mapped=127.0.0.1:64482
+health_ready=True port=64482
+=== docker logs ===
+{"ts":"2026-11-23T19:38:06.690Z","level":"INFO","logger":"app","msg":"application started","request_id":null,"org_id":null,"site_id":null,"user_id":null,"route":null,"status":null,"duration_ms":null,"env":"prod"}
+INFO:     Started server process [1]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+{"ts":"2026-11-23T19:38:07.062Z","level":"INFO","logger":"app.access","msg":"GET /health","request_id":"e3396d62-4389-48f1-8aa4-15f35426c5c3","org_id":null,"site_id":null,"user_id":null,"route":"/health","status":200,"duration_ms":4.642,"env":"prod"}
+{"ts":"2026-11-23T19:38:07.168Z","level":"INFO","logger":"app.access","msg":"GET /health","request_id":"0ad53c15-56b5-4fa3-bb26-62a519d9f69d","org_id":null,"site_id":null,"user_id":null,"route":"/health","status":200,"duration_ms":0.933,"env":"prod"}
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+=== docker inspect status ===
+running restarts=0
