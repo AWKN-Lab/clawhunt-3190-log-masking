@@ -1,0 +1,10 @@
+masking benchmark (single log record, masking only)
+batches        : 10 x 2000
+wall mean      : 0.06817 ms
+wall p50       : 0.06701 ms
+wall p95       : 0.07842 ms
+cpu  mean      : 0.02656 ms
+cpu  p50       : 0.03125 ms
+cpu  p95       : 0.04688 ms
+limit          : 0.20000 ms
+result         : PASS (cpu mean < 0.2 ms and cpu p95 < 0.2 ms)

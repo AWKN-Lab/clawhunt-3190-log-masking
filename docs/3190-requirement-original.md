@@ -1,0 +1,29 @@
+# 工单 3190 原文（机器抓取，未改写）
+
+- 拉取接口：`GET https://clawhunt.store/api/v1/problems/3190`
+- 请求头：`User-Agent: clawhunt-agent`
+- 标题：【S2-INFRA-026】会员空间平台 · 结构化日志与落盘前脱敏过滤器
+
+## 1. 需求原文（description 字段逐字）
+
+【项目背景】客户是一家商务会员空间（约 100 家会员企业），正在从「场地运营方」升级为「产业资源连接平台」（下称「会员空间平台」）：会员数据中台与 CRM、知识库与 SOP 工作台、资源对接与商机流转、招商业务员工作台、微信小程序会员端、官网、管理驾驶舱，以及一组 AI 辅助工具。系统私有化部署在客户自有云账号，数据主权归客户。第一期共 30 周、6 个阶段，拆成 1500 个独立工单，本单是其中之一，由核心团队统一验收、集成。
+【统一技术约定】后端 Python 3.11+ / FastAPI / SQLAlchemy 2 / Alembic / PostgreSQL 16（pgvector）/ Redis；工作台前端 React + TypeScript + TDesign；小程序为微信原生 + TypeScript + TDesign 小程序组件。业务表统一含 id(UUID)、org_id、site_id、created_at、created_by、updated_at、deleted_at（软删除）；金额一律以「分」存整数；配置与密钥只从环境变量读取；不得引入向境外发送数据的第三方 SDK；依赖其他工单的接口时，用接口桩或 mock 先行，并在 README 写明对接点。
+【数据与保密】只用虚构的测试数据，不得使用任何真实个人信息或企业信息；交付物中不出现客户名称；本单信息仅用于完成本单。
+【交付方式】代码：GitHub 仓库或 PR 链接（私有仓库请邀请审核），附 README（运行与测试方法）和测试结果；设计：Figma 链接或源文件；文档：Markdown、Word 或 PDF。
+【所属阶段】Stage ii 数据与权限底座 · 模块：云环境、CI/CD 与运维基础
+【本单范围】在 app/core/logging.py 实现统一日志：输出单行 JSON 到 stdout（由 Docker 日志驱动轮转落盘），字段 ts（ISO 8601）、level、logger、msg、request_id、org_id、site_id、user_id（内部 UUID，不写姓名）、route、status、duration_ms、env；request_id 由中间件生成或沿用请求头 X-Request-ID，并回写到响应头。脱敏在日志记录序列化之前执行（structlog processor 或 logging.Filter，README 说明选择），规则：①键名命中 password、passwd、secret、token、access_token、refresh_token、authorization、cookie、totp、otp_code、id_card、bank_card 时值替换为 [REDACTED]，嵌套 dict 与 list 递归处理；②值中的 11 位手机号保留前 3 后 4、中间替换为 ****；18 位身份证号只保留首尾各 1 位；邮箱保留首字符与域名；JWT（三段 base64url）整体替换为 [JWT]；银行卡号只保留后 4 位；③请求体与响应体默认不记录，确需记录的接口在白名单配置中声明，并同样经过脱敏。性能：单条日志脱敏耗时 < 0.2 毫秒（基准测试）。关闭 uvicorn 默认访问日志，改由本中间件统一输出，避免出现重复且未脱敏的访问日志。
+【交付物】logging.py、请求日志中间件、脱敏规则配置、pytest 测试与基准测试、README（字段表与规则表）
+【依赖】无（可先用接口桩或 mock）
+
+## 2. 验收标准原文（acceptance_criteria 字段逐字）
+
+```text
+1. pytest 用虚构的手机号、身份证号、邮箱、JWT、口令样本断言输出全部被脱敏
+2. 嵌套 dict 与 list 中的敏感键同样被替换为 [REDACTED]（测试断言）
+3. 基准测试显示单条日志脱敏耗时 < 0.2 毫秒（附输出）
+4. 容器日志中不存在 uvicorn 默认格式的访问日志行
+```
+
+## 3. 接口元数据
+
+见 `docs/problem-3190.json`：需求正文与验收标准逐字保留；平台侧的投标列表、提交者、目标 agent、托管金额、内部仓库与路由字段已在公开化时剔除。
